@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, String, DateTime, Boolean, Column, Integer, Date,ForeignKey
+from sqlalchemy import BigInteger, String, DateTime, Boolean, Column, Integer, Date,ForeignKey, Table
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
 from sqlalchemy.sql import func
@@ -13,6 +13,14 @@ async_session = async_sessionmaker(engine)
 class Base(AsyncAttrs, DeclarativeBase):
     pass
 
+
+user_subscriptions = Table(
+    'user_subscriptions',
+    Base.metadata,
+    Column('user_id', ForeignKey('users.id'), primary_key=True),
+    Column('subscription_id', ForeignKey('subscriptions.id'), primary_key=True)
+)
+
 class User(Base):
     __tablename__ = 'users'
 
@@ -22,7 +30,9 @@ class User(Base):
     user_phone: Mapped[str] = mapped_column(String(20))
     user_email: Mapped[str] = mapped_column(String(50))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
-    subscriptions = relationship("Subscription", back_populates='user')
+
+    subscriptions = relationship("Subscription", secondary=user_subscriptions, back_populates='users')
+    # subscriptions = relationship("Subscription", back_populates='user')
 
 class Subscription(Base):
     __tablename__ = 'subscriptions'
@@ -35,8 +45,9 @@ class Subscription(Base):
     end_date: Mapped[Optional[datetime]] = mapped_column(Date, nullable=True)
     is_hidden: Mapped[bool] = mapped_column(Boolean, default=False)
 
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
-    user = relationship("User", back_populates='subscriptions')
+    users = relationship("User", secondary=user_subscriptions, back_populates='subscriptions')
+    # user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    # user = relationship("User", back_populates='subscriptions')
 
 
 

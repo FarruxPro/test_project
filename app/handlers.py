@@ -236,11 +236,15 @@ async def process_channels(message: Message, state: FSMContext):
           new_sub = Subscription(
                name=data['name'],
                description=data['description'],
-               id_channels=combined_ids,
-               user_id=message.from_user.id
+               id_channels=combined_ids
           )
           session.add(new_sub)
           await session.commit()
+
+          user = await session.get(User, message.from_user.id)
+          if user:
+               user.subscriptions.append(new_sub)
+               await session.commit()   
 
      await message.answer(
         f"Подписка создана успешно!\nНазвание: {data['name']},\nОписание: {data['description']}\nКаналы: {combined_ids}",

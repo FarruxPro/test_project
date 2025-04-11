@@ -3,7 +3,7 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from datetime import date, datetime
-from app.database.models import User, Subscription, async_session
+from app.database.models import User, Subscription, user_subscriptions,async_session
 
 from sqlalchemy import select, func, distinct, and_
 
@@ -22,8 +22,11 @@ async def static(callback: CallbackQuery):
         result = await session.execute(select(func.count(User.id)))
         users = result.scalar()
 
+
         # Подсчитываем количество активных подписок
-        stmt = select(func.count(func.distinct(Subscription.user_id))).filter(
+        stmt = select(func.count(func.distinct(User.id))).join(
+            User.subscriptions  # Это связь "многие ко многим"
+        ).filter(
             and_(
                 Subscription.start_date <= today,
                 Subscription.end_date >= today
@@ -207,18 +210,21 @@ async def get_subscription_end_date(message: Message, state: FSMContext):
             return
         
         async with async_session() as session:
-            stmt_users = select(func.count(distinct(User.id))).join(Subscription).filter(
+            # Подсчет количества пользователей с подписками в выбранный период
+            stmt_users = select(func.count(distinct(User.id))).join(
+                user_subscriptions
+            ).join(
+                Subscription
+            ).filter(
                 Subscription.id == sub_id,
-                and_(
-                    Subscription.start_date <= end_date,
-                    Subscription.end_date >= start_date
-                )
+                Subscription.start_date <= end_date,
+                Subscription.end_date >= start_date
             )
             result_users = await session.execute(stmt_users)
             users_count = result_users.scalar()
 
-            # Кол-во активных подписчиков на период
-            stmt_active = select(func.count(distinct(Subscription.user_id))).filter(
+            # Подсчет количества активных подписок в выбранный период
+            stmt_active = select(func.count(distinct(user_subscriptions.c.user_id))).filter(
                 Subscription.id == sub_id,
                 Subscription.start_date <= end_date,
                 Subscription.end_date >= start_date
@@ -226,7 +232,7 @@ async def get_subscription_end_date(message: Message, state: FSMContext):
             result_active = await session.execute(stmt_active)
             active_count = result_active.scalar()
 
-            # Завершающиеся подписки (конец — последний день периода)
+            # Количество подписок, которые заканчиваются в этот период
             stmt_ending = select(func.count(Subscription.id)).filter(
                 Subscription.id == sub_id,
                 Subscription.end_date == end_date
@@ -234,7 +240,7 @@ async def get_subscription_end_date(message: Message, state: FSMContext):
             result_ending = await session.execute(stmt_ending)
             ending_count = result_ending.scalar()
 
-            # Завершенные подписки
+            # Количество завершенных подписок в выбранный период
             stmt_ended = select(func.count(Subscription.id)).filter(
                 Subscription.id == sub_id,
                 Subscription.end_date >= start_date,

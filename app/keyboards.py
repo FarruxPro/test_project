@@ -206,3 +206,36 @@ async def subscription_static() -> InlineKeyboardMarkup:
 static_menu = InlineKeyboardMarkup(inline_keyboard= [
     [InlineKeyboardButton(text='Меню', callback_data='admin')]
 ])
+
+
+# чтобы назначить подписку
+async def assign_subscription(selected_subs=None) -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[])
+
+    async with async_session() as session:
+        result = await session.execute(select(Subscription))
+        subscriptions = result.scalars().all()
+
+        for sub in subscriptions:
+            if not sub.is_hidden:
+                button_text = sub.name
+                if selected_subs and sub.id in selected_subs:
+                    button_text +=" ✅"
+                keyboard.inline_keyboard.append(
+                    [InlineKeyboardButton(text=button_text, callback_data=f"assign_{sub.id}")])
+    
+    keyboard.inline_keyboard.append(
+        [InlineKeyboardButton(text="✅Готово", callback_data='assign_done')]
+    )
+    keyboard.inline_keyboard.append(
+        [InlineKeyboardButton(text="Назад", callback_data='user_management')]
+    )
+    return keyboard
+
+choice_of_deadline = InlineKeyboardMarkup(inline_keyboard= [
+    [InlineKeyboardButton(text='30 дней', callback_data='30_day')],
+    [InlineKeyboardButton(text='90 дней', callback_data='90_day')],
+    [InlineKeyboardButton(text='180 дней', callback_data='180_day')],
+    [InlineKeyboardButton(text='360 дней', callback_data='360_day')],
+    [InlineKeyboardButton(text='Назад', callback_data='user_management')]
+])

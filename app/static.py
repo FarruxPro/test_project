@@ -1,14 +1,11 @@
-from aiogram import F, Router, types
-from aiogram.filters import CommandStart, Command
+from aiogram import F, Router
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
-from aiogram.exceptions import TelegramForbiddenError, TelegramBadRequest
 from datetime import date, datetime
 from app.database.models import User, Subscription, async_session
 
-from sqlalchemy import select, delete, func, distinct, and_
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func, distinct, and_
 
 import os
 import re

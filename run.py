@@ -8,6 +8,7 @@ from app.database.models import async_main
 
 from app.handlers import router as handlers
 from app.static import router as static
+from app.assign_subscriptions import router as assign
 
 load_dotenv()
 TOKEN = os.getenv('TOKEN')
@@ -22,7 +23,8 @@ async def main():
     await async_main()
     dp.include_routers(
         handlers,
-        static
+        static,
+        assign
         )
     await dp.start_polling(bot)
 

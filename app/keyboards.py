@@ -2,7 +2,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from app.database.models import Subscription, async_session
 from sqlalchemy import select
 
-premium = False
+premium = True
 
 subscriptions_data = 'my_subscriptions' if premium else 'no_subscription'
 

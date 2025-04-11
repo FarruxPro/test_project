@@ -119,13 +119,12 @@ async def apply_subscription_duration(callback: CallbackQuery, state: FSMContext
     end =start + timedelta(days=duration_days)
 
     async with async_session() as session:
-        user = await session.get(User, user.id)
         for sub_id in selected_subs:
             sub = await session.get(Subscription, sub_id)
             if sub:
                 sub.start_date = start
                 sub.end_date = end
-                user.subscriptions.append(sub)
+                sub.user_id = user.id
         await session.commit()
 
     await callback.message.edit_text("Подписки успешно назначены!")
@@ -149,13 +148,12 @@ async def handle_manual_duration(message: Message, state: FSMContext):
     end = start + timedelta(days=duration_days)
 
     async with async_session() as session:
-        user = await session.get(User, user.id)
         for sub_id in selected_subs:
             sub = await session.get(Subscription, sub_id)
             if sub:
                 sub.start_date = start
                 sub.end_date = end
-                user.subscriptions.append(sub)
+                sub.user_id = user.id
         await session.commit()
 
     await message.answer("Подписки успешно назначены!")

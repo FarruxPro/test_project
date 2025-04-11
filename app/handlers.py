@@ -236,15 +236,11 @@ async def process_channels(message: Message, state: FSMContext):
           new_sub = Subscription(
                name=data['name'],
                description=data['description'],
-               id_channels=combined_ids
+               id_channels=combined_ids,
+               user_id=message.from_user.id
           )
           session.add(new_sub)
           await session.commit()
-
-          user = await session.get(User, message.from_user.id)
-          if user:
-               user.subscriptions.append(new_sub)
-               await session.commit()   
 
      await message.answer(
         f"Подписка создана успешно!\nНазвание: {data['name']},\nОписание: {data['description']}\nКаналы: {combined_ids}",
@@ -483,6 +479,3 @@ async def delete_sub(callback: CallbackQuery):
                await session.commit()
                await callback.message.edit_text(f'Подписка «{subscription.name}» успешно удалена.',
                                                 reply_markup=kb.back_sub)
-
-
-
